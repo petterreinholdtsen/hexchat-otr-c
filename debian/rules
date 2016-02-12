@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	./autogen.sh
+	dh_auto_configure
+
+override_dh_auto_clean:
+	./autogen.sh
+	dh_auto_clean
+	$(RM) Makefile.in aclocal.m4 ar-lib compile config.guess config.h.in
+	$(RM) config.sub configure depcomp install-sh ltmain.sh
+	$(RM) missing src/Makefile.in
+	$(RM) -r m4
+
+
+override_dh_auto_install:
+	dh_auto_install
+	rm debian/hexchat-otr/usr/lib/*/hexchat/plugins/otr.a
+	rm debian/hexchat-otr/usr/lib/*/hexchat/plugins/otr.la
