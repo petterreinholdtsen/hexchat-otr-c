@@ -1,0 +1,62 @@
+Description: Fix all compiler warnings.
+ Make sure global functions have prototypes and all return
+ values are checked.
+Author: Petter Reinholdtsen <pere@hungry.com>
+Sent-Upstream: https://github.com/TingPing/hexchat-otr/pull/10
+
+diff --git a/src/hexchat_otr.h b/src/hexchat_otr.h
+index a72e399..ceb5cf3 100644
+--- a/src/hexchat_otr.h
++++ b/src/hexchat_otr.h
+@@ -45,6 +45,18 @@ extern hexchat_plugin *ph; /* plugin handle */
+ 
+ void printformat (IRC_CTX *ircctx, const char *nick, int lvl, int fnum, ...);
+ 
++/* The plugin interface */
++void hexchat_plugin_get_info (char **name,
++			      char **desc,
++			      char **version,
++			      void **reserved);
++int hexchat_plugin_init (hexchat_plugin *plugin_handle,
++			 char **plugin_name,
++			 char **plugin_desc,
++			 char **plugin_version,
++			 char *arg);
++int hexchat_plugin_deinit (void);
++
+ #define otr_noticest(formatnum, ...) \
+ 	printformat (NULL, NULL, MSGLEVEL_MSGS, formatnum, ##__VA_ARGS__)
+ 
+diff --git a/src/otr_key.c b/src/otr_key.c
+index 2b353d9..5a1264e 100644
+--- a/src/otr_key.c
++++ b/src/otr_key.c
+@@ -96,8 +96,14 @@ static gboolean keygen_complete (GIOChannel *source, GIOCondition condition,
+ 	char *filename = g_strconcat (confdir, KEYFILE, NULL);
+ 	char *tmpfilename = g_strconcat (confdir, TMPKEYFILE, NULL);
+ 
+-	read (g_io_channel_unix_get_fd (kg_st.ch[0]), &err, sizeof(err));
+-
++	if (-1 == read (g_io_channel_unix_get_fd (kg_st.ch[0]), &err, sizeof(err)))
++	{
++		otr_noticest (TXT_KG_FAILED,
++					  kg_st.accountname,
++					  strerror(errno),
++					  "read failed");
++	}
++	
+ 	g_io_channel_shutdown (kg_st.ch[0], FALSE, NULL);
+ 	g_io_channel_shutdown (kg_st.ch[1], FALSE, NULL);
+ 	g_io_channel_unref (kg_st.ch[0]);
+@@ -208,7 +214,10 @@ void keygen_run (const char *accname)
+ 	/* child */
+ 
+ 	err = otrl_privkey_generate (otr_state, filename, accname, PROTOCOLID);
+-	write (fds[1], &err, sizeof(err));
++	if (sizeof(err) != write (fds[1], &err, sizeof(err)))
++	{
++		perror("keygen_run - unable to write to stdout pipe");
++	}
+ 
+ 	_exit (0);
+ }
