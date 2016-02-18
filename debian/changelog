@@ -1,5 +1,5 @@
 hexchat-otr (0.2.0-1) UNRELEASED; urgency=low
 
-  * Initial release. (Closes: #?)
+  * Initial release. (Closes: #815059)
 
  -- Petter Reinholdtsen <pere@debian.org>  Sun, 14 Feb 2016 23:13:46 +0100
